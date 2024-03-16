@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tracker</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <!-- Leaflet.label CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.label/0.2.4/leaflet.label.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-image: linear-gradient(to bottom, #d3e4ff 0%, #f0f8ff 100%);
+    }
+    .top-bar {
+      background-image: url("https://th.bing.com/th/id/OIP.O7w2ykIqulaDtXqxYyPtNwHaDt?rs=1&pid=ImgDetMain");
+      background-color: #333;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      position: fixed;
+      top: 0;
+      padding-top: 100px;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      background-repeat: repeat;
+      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-direction: row;
+    }
+    .title {
+      font-size: 0.8em;
+      margin-bottom: 5px;
+      color: white; /* White text */
+    }
+    .data {
+      font-weight: bold;
+      font-size: 1.2em;
+      color: white; /* White text */
+    }
+    #map-container {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 100px);
+      margin-top: 50px;
+      padding-top: 100px;
+      border: 2px solid white; /* White border */
+    }
+    .basket-icon {
+      width: 25px;
+      height: 25px;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div id="headingFor" class="title">Heading for:</div>
+    <div id="nextCityInfo" class="data">LOADING!!</div>
+    <div id="lastSeen" class="title">Last Seen:</div>
+    <div id="lastCityInfo" class="data">LOADING!!</div>
+    <div id="baskets" class="title">Baskets Delivered:</div>
+    <div id="basketsInfo" class="data">LOADING!!</div>
+  </div>
+
+  <div id="map-container"></div>
+<!-- Attribution -->
+<div class="leaflet-attribution">
+  Map data &copy; <a href="https://www.google.com/maps">Google Maps</a>
+</div>
+  <!-- Leaflet JavaScript -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <!-- Leaflet.label JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.label/0.2.4/leaflet.label.js"></script>
+  <script>
+    var url = new URL(window.location.href);
+  var zoom = url.searchParams.get("zoom");
+
+  // Convert the zoom value to an integer (default to 2 if not provided)
+  zoom = parseInt(zoom) || 2;
+  var nobaskets = url.searchParams.get("nobaskets");
+if (nobaskets === "1") {
+  console.log("NO BASKETS");
+} else {
+  fetchBaskets(); // Fetch all baskets onload
+}
+
+
+  // Initialize Leaflet map with the parsed zoom value
+  var map = L.map('map-container').setView([0, 0], zoom);
+
+  // Add the tile layer (satellite imagery with labels)
+  L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+  }).addTo(map);
+    // Add Santa marker
+    var santaMarker = L.marker([0, 0], {
+      icon: L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/347/347485.png',
+        iconSize: [50, 50], // size of the icon
+        iconAnchor: [25, 25] // point of the icon which will correspond to marker's location
+      })
+    }).addTo(map);
+
+    // Function to handle SSE messages
+    function handleSSE(event) {
+      // Parse the event data
+      const data = JSON.parse(event.data);
+
+      // Update other information
+      document.getElementById('nextCityInfo').textContent = data.nextCity ? `${data.nextCity.country}, ${data.nextCity.city} in ${data.timeLeft} seconds.` : "";
+      document.getElementById('lastCityInfo').textContent = data.lastCity ? `${data.lastCity.country}, ${data.lastCity.city}` : "";
+      document.getElementById('basketsInfo').textContent = data.presentsDelivered ? data.presentsDelivered.toLocaleString() : "";
+
+      // Teleport Santa to the next city
+      if (data.currentCity && data.nextCity) {
+        santaMarker.setLatLng([data.nextCity.latitude, data.nextCity.longitude]);
+        map.setView([data.nextCity.latitude, data.nextCity.longitude], map.getZoom());
+      }
+
+      // Add basket to the map
+      if (data.newBasket) {
+        addBasket(data.newBasket);
+      }
+    }
+
+    // Start listening for SSE messages
+    const eventSource = new EventSource("/updates");
+    eventSource.onmessage = handleSSE;
+ // Function to fetch all the baskets onload
+ function addBasket(cityInfo) {
+  // Create a marker for the basket
+  const basketMarker = L.marker([cityInfo.latitude, cityInfo.longitude], {
+    icon: L.divIcon({
+      className: 'basket-icon',
+      html: '<img src="https://th.bing.com/th/id/R.d9bb1c753e4b03ac4d9a9c743287b75b?rik=h8SVGaZXv7uVPg&riu=http%3a%2f%2fclipart-library.com%2fimages_k%2feaster-basket-transparent%2feaster-basket-transparent-23.png&ehk=eTqJD5CcGIxAtijBhZ63ykr2tQ57gjaWCxMh4P80w4Y%3d&risl=&pid=ImgRaw&r=0" width="50px" height="50px">'
+    })
+  }).addTo(map);
+
+  // Bind a popup to the marker with city and country information
+  basketMarker.bindPopup(`${cityInfo.city}, ${cityInfo.country}`);
+
+  // Open popup on marker click
+  basketMarker.on('click', function () {
+    this.openPopup();
+  });
+}
+
+     
+      // Function to fetch all baskets from the server
+      async function fetchBaskets() {
+        try {
+          const response = await fetch("/getbaskets");
+          const data = await response.json();
+          console.log("Response data:", data); // Log the response data
+          data.forEach((basket) => {
+            addBasket(basket);
+          });
+        } catch (error) {
+          console.error("Error fetching baskets:", error);
+        }
+      }
+  </script>
+</body>
+</html>

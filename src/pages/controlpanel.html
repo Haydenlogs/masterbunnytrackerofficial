@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Control Panel</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: #fff;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+      .status {
+        color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Control Panel</h1>
+      <button onclick="unlockSite()">Unlock Site</button>
+      <button onclick="lockSite()">Lock Site</button>
+      <button onclick="startTracker()">Start Tracker</button>
+      <button onclick="endTracker()">End Tracker</button>
+      <button onclick="resetTracker()">Reset Tracker Index</button>
+      <button onclick="postmessage1()">Message 1</button>
+      <button onclick="postmessage2()">Message 2</button>
+      <button onclick="postmessage3()">Message 3</button>
+      <button onclick="postmessage4()">Message 4</button>
+      <button onclick="resetbaskets()">Reset Baskets</button>
+      <button onclick="refreshpage()">Open Refreshpage</button>
+      <button onclick="refreshallpages()">Refresh All (5 Seconds)</button>
+      <center><a class="status" id="lastCityInfo">Last Seen:</a><br/><a class="status" id="nextCityInfo">Headed For: </a><br/><a class="status" id="seconds">Seconds</a><br/>
+    <br/><a id="basketsInfo">Live Basket Count: </a></center>
+    </div>
+
+    <script>
+      // Function to handle SSE messages
+    function handleSSE(event) {
+      // Parse the event data
+      const data = JSON.parse(event.data);
+      const presents = data.presentsDelivered.toLocaleString()
+      // Update other information
+      document.getElementById('nextCityInfo').textContent = data.nextCity ? `Headed For: ${data.nextCity.country}, ${data.nextCity.city}` : "";
+      document.getElementById('lastCityInfo').textContent = data.lastCity ? `Last Seen: ${data.lastCity.country}, ${data.lastCity.city}` : "";
+      document.getElementById('seconds').textContent = `Seconds Left: ${data.timeLeft} seconds.`;
+      document.getElementById('basketsInfo').textContent = `Live Baskets Delivered: ${presents}`;
+
+      
+    }
+
+    // Start listening for SSE messages
+    const eventSource = new EventSource("/updates");
+    eventSource.onmessage = handleSSE;
+
+      //Easter Bunny is Getting Ready to Launch.
+      //Easter Bunny is expected to launch within the hour.
+      //Easter Bunny is about to launch.
+      //Easter Bunny is Launching!.
+      function unlockSite() {
+        fetch("/unlock")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to unlock site");
+            }
+            console.log("Site unlocked successfully");
+          })
+          .catch((error) => console.error(error));
+      }
+      function resetbaskets() {
+        fetch("/resetbaskets")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to unlock site");
+            }
+            console.log("Site unlocked successfully");
+          })
+          .catch((error) => console.error(error));
+      }
+function refreshpage() {
+  window.location.href = "/refresherpage"
+}
+      function lockSite() {
+        fetch("/lock")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to lock site");
+            }
+            console.log("Site locked successfully");
+          })
+          .catch((error) => console.error(error));
+      }
+      function postmessage1() {
+        fetch("/message1set")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to lock site");
+            }
+            console.log("Site locked successfully");
+          })
+          .catch((error) => console.error(error));
+      }
+      function postmessage2() {
+        fetch("/message2set")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to lock site");
+            }
+            console.log("Site locked successfully");
+          })
+          .catch((error) => console.error(error));
+      }
+      function postmessage3() {
+        fetch("/message3set")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to lock site");
+            }
+            console.log("Site locked successfully");
+          })
+          .catch((error) => console.error(error));
+      }
+      function postmessage4() {
+        fetch("/message4set")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to lock site");
+            }
+            console.log("Site locked successfully");
+          })
+          .catch((error) => console.error(error));
+      }
+      function startTracker() {
+        fetch("/starttracker")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to start tracker");
+            }
+            console.log("Tracker started successfully");
+          })
+          .catch((error) => console.error(error));
+      }
+
+      function endTracker() {
+        fetch("/endtracker")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to end tracker");
+            }
+            console.log("Tracker ended successfully");
+          })
+          .catch((error) => console.error(error));
+      }
+      function refreshallpages() {
+        fetch("/refreshall")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to end tracker");
+            }
+            console.log("Tracker ended successfully");
+          })
+          .catch((error) => console.error(error));
+      }
+      function resetTracker() {
+        fetch("/restarttracker")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to end tracker");
+            }
+            console.log("Tracker ended successfully");
+          })
+          .catch((error) => console.error(error));
+      }
+    </script>
+  </body>
+</html>
